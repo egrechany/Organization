@@ -20,4 +20,20 @@ public class UserService {
     public List<User> findAll(){
         return userRepository.findAll();
     }
+
+    public List<String> findLikeThree(String three){
+        return userRepository.findLikeThree(three);
+    }
+
+    public Integer getVotes(String name){
+        return userRepository.getVotes(name);
+    }
+
+    public String getV(){
+        return userRepository.getV();
+    }
+
+    public String getLeaders(){
+        return userRepository.getLeaders();
+    }
 }
