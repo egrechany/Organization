@@ -1,6 +1,9 @@
 package com.example.demo.contoller;
 
+import com.example.demo.repository.AssociateModified;
+import com.example.demo.repository.Leader;
 import com.example.demo.repository.User;
+import com.example.demo.repository.UserFrontEnd;
 import com.example.demo.service.UserService;
 import org.springframework.web.bind.annotation.*;
 
@@ -39,7 +42,22 @@ public class UserController {
     }
 
     @GetMapping("/leaders")
-    public String getLeaders(){
+    public List<Leader> getLeaders(){
         return userService.getLeaders();
+    }
+
+    @GetMapping("/supporters/{name}")
+    public List<Leader> getSupporters(@PathVariable("name") String name){
+        return userService.getSupporters(name);
+    }
+
+    @GetMapping("/publicUser/{name}")
+    public UserFrontEnd getUserFrontEnd(@PathVariable("name") String name){
+        return userService.getUserFrontEnd(name);
+    }
+
+    @PostMapping("/EnterUser")
+    public Boolean postUserFrontEnd(@RequestBody AssociateModified am){
+        return userService.postUserFrontEnd(am);
     }
 }

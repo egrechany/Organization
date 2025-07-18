@@ -6,6 +6,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "associates" )
@@ -98,6 +99,23 @@ public class User {
         this.downConnectionPassword = downConnectionPassword;
     }
 
+    public LocalDateTime getCreated_time() {
+        return created_time;
+    }
+
+    public void setCreated_time(LocalDateTime created_time) {
+        this.created_time = created_time;
+    }
+
+    public LocalDateTime getUpdated_time() {
+        return updated_time;
+    }
+
+    public void setUpdated_time(LocalDateTime updated_time) {
+        this.updated_time = updated_time;
+    }
+
+
     @Id
     @Column(name = "name")
     private String name;
@@ -128,5 +146,11 @@ public class User {
 
     @Column(name = "down_connection_password")
     private String downConnectionPassword;
+
+    @Column(name = "created_time")
+    private LocalDateTime created_time;
+
+    @Column(name = "updated_time")
+    private LocalDateTime updated_time;
 
 }
