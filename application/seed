@@ -1,0 +1,150 @@
+CREATE TABLE associates (name varchar(25) PRIMARY KEY,supporter_name varchar(25),
+left_connection_name varchar(25),right_connection_name varchar(25),
+up_connection_name varchar(25),down_connection_name varchar(25),
+left_connection_password varchar(25),right_connection_password varchar(25),
+up_connection_password varchar(25),down_connection_password varchar(25),
+created_time TIMESTAMP WITH TIME ZONE,updated_time TIMESTAMP WITH TIME ZONE)
+
+ALTER TABLE associates ALTER COLUMN created_time SET DEFAULT NOW()
+
+CREATE OR REPLACE FUNCTION set_updated_time()
+RETURNS TRIGGER AS $$
+BEGIN
+    NEW.updated_time := NOW();
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER before_update_associates
+BEFORE UPDATE ON associates
+FOR EACH ROW
+EXECUTE FUNCTION set_updated_time();
+
+INSERT INTO associates(name,supporting_name) VALUES('Stepan','Stepan'),
+('Ivan','Stepan'),('Adolf Hitler','Adolf Hitler'),
+('Adolf','Adolf Hitler'),('Jacky','Adolf'),('Svetlana','Jacky'),
+('Sveta','Jacky') , ('Jack Vorobei','Jacky'),('Jack Hacker','Jacky');
+
+INSERT INTO associates(name,supporting_name) VALUES('Avdei','Jacky'),
+('Anton','Avdei'),('Adolf Hitler','Jacky'),
+('Gordon','Jacky'),('Gebbels','Jacky'),('Putin','Jacky'),
+('Trump','Jacky') , ('Obama','Jacky'),('Sergei','Jacky');
+
+DROP FUNCTION IF EXISTS leader_votes(VARCHAR);
+
+CREATE OR REPLACE FUNCTION leader_votes(input_name VARCHAR)
+RETURNS INTEGER AS $$
+DECLARE
+    votes_count INTEGER;
+BEGIN
+    WITH RECURSIVE supporters AS (
+        SELECT name AS supportersid FROM associates WHERE supporting_name = input_name
+        UNION ALL
+        SELECT a.name
+        FROM supporters s
+        JOIN associates a ON s.supportersid = a.supporting_name
+        WHERE s.supportersid != input_name
+    )
+    SELECT COUNT(*) INTO votes_count FROM supporters;
+
+    RETURN votes_count;
+END;
+$$ LANGUAGE plpgsql STABLE;
+
+SELECT name, leader_votes(name) AS votes
+FROM associates
+WHERE name = supporting_name;
+
+
+
+WITH RECURSIVE connected AS(
+			SELECT c_name FROM (SELECT down_connection_name AS c_name ,
+            (SELECT
+                CASE
+                    WHEN a.down_connection_password = b.up_connection_password THEN 1
+                    ELSE 0
+                END AS mutual
+            FROM associates a
+            JOIN associates b ON a.name != b.name
+            WHERE a.name = 'Vlad' AND b.name = associates.down_connection_name)
+            FROM associates WHERE name = 'Vlad'
+            UNION
+            SELECT up_connection_name AS c_name ,
+            (SELECT
+                CASE
+                    WHEN a.up_connection_password = b.down_connection_password THEN 1
+                    ELSE 0
+                END AS mutual
+            FROM associates a
+            JOIN associates b ON a.name != b.name
+            WHERE a.name = 'Vlad' AND b.name = associates.up_connection_name)
+            FROM associates WHERE name = 'Vlad'
+            UNION
+            SELECT right_connection_name AS c_name ,
+            (SELECT
+                CASE
+                    WHEN a.right_connection_password = b.left_connection_password THEN 1
+                    ELSE 0
+                END AS mutual
+            FROM associates a
+            JOIN associates b ON a.name != b.name
+            WHERE a.name = 'Vlad' AND b.name = associates.right_connection_name)
+            FROM associates WHERE name = 'Vlad'
+            UNION
+            SELECT left_connection_name AS c_name ,
+            (SELECT
+                CASE
+                    WHEN a.left_connection_password = b.right_connection_password THEN 1
+                    ELSE 0
+                END AS mutual
+            FROM associates a
+            JOIN associates b ON a.name != b.name
+            WHERE a.name = 'Vlad' AND b.name = associates.left_connection_name)
+            FROM associates WHERE name = 'Vlad') AS connections WHERE mutual = 1
+			UNION ALL
+			SELECT c_name FROM (SELECT down_connection_name AS c_name ,
+            (SELECT
+                CASE
+                    WHEN a.down_connection_password = b.up_connection_password THEN 1
+                    ELSE 0
+                END AS mutual
+            FROM associates a
+            JOIN associates b ON a.name != b.name
+            WHERE a.name = connected.c_name AND b.name = associates.down_connection_name)
+            FROM associates WHERE name = connected.c_name
+            UNION
+            SELECT up_connection_name AS c_name ,
+            (SELECT
+                CASE
+                    WHEN a.up_connection_password = b.down_connection_password THEN 1
+                    ELSE 0
+                END AS mutual
+            FROM associates a
+            JOIN associates b ON a.name != b.name
+            WHERE a.name = connected.c_name AND b.name = associates.up_connection_name)
+            FROM associates WHERE name = connected.c_name
+            UNION
+            SELECT right_connection_name AS c_name ,
+            (SELECT
+                CASE
+                    WHEN a.right_connection_password = b.left_connection_password THEN 1
+                    ELSE 0
+                END AS mutual
+            FROM associates a
+            JOIN associates b ON a.name != b.name
+            WHERE a.name = connected.c_name AND b.name = associates.right_connection_name)
+            FROM associates WHERE name = connected.c_name
+            UNION
+            SELECT left_connection_name AS c_name ,
+            (SELECT
+                CASE
+                    WHEN a.left_connection_password = b.right_connection_password THEN 1
+                    ELSE 0
+                END AS mutual
+            FROM associates a
+            JOIN associates b ON a.name != b.name
+            WHERE a.name = connected.c_name AND b.name = associates.left_connection_name)
+            FROM associates WHERE name = connected.c_name) WHERE mutual = 1 AND c_name != 'Vlad'
+)
+
+SELECT * FROM connected;
