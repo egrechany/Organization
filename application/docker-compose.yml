@@ -1,0 +1,25 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: spring_app
+    ports:
+      - "8080:8080"
+    depends_on:
+      - postgres
+
+  postgres:
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_PASSWORD=grech006688GG
+      - POSTGRES_USER=postgres
+      - POSTGRES_DB=organization
+    image: postgres:17-alpine
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./db/:/docker-entrypoint-initdb.d
+
+volumes:
+  pgdata:
